@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Does AI rendering keep the design?</title>
+<meta name="description" content="A measured test of how well SDXL with ControlNet keeps geometry and materials on Blender scenes, with before and after comparisons and the failures.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="wrap page-header">
+  <p class="eyebrow">archviz-controlnet-benchmark</p>
+  <h1>Does AI rendering keep the design?</h1>
+  <p class="lead">AI renderers for architects promise to keep a design's geometry and materials. I tested how well that holds with SDXL and ControlNet, on Blender scenes where the true depth and material of every pixel are known.</p>
+  <p class="lead">Starting generation from the render instead of from noise brought the average colour shift from 17–20 down to about 1.2, where about 2 is barely visible. A large part of that gain is that the model changes much less, so it is a trade-off and not a win on every count.</p>
+  <nav class="links" aria-label="Project links">
+    <a href="https://github.com/SofiSokolova/archviz-controlnet-benchmark/blob/main/JOURNAL.md">Experiment journal</a>
+    <a href="https://github.com/SofiSokolova/archviz-controlnet-benchmark">Code on GitHub</a>
+  </nav>
+</header>
+
+<main>
+  <section class="wrap" aria-labelledby="compare-title">
+    <h2 id="compare-title">Compare it yourself</h2>
+    <p>Drag across the image: the Blender render is on the left and the result on the right. Every frame shows seed 1, so these images were not picked by hand.</p>
+    <div id="compare"></div>
+    <noscript><p>The comparisons on this page need JavaScript. The numbers are also in the experiment journal.</p></noscript>
+  </section>
+
+  <section class="wrap" aria-labelledby="failures-title">
+    <h2 id="failures-title">What broke first</h2>
+    <p>These examples were chosen on purpose, to show the failures. All of them started from noise, so the model saw the source only through its edges or depth.</p>
+    <div id="failures" class="failures"></div>
+  </section>
+
+  <section class="wrap" aria-labelledby="series-title">
+    <h2 id="series-title">How far to let the model go</h2>
+    <p>Starting from the render adds one setting, <code>denoise</code>: how much noise goes onto the render before generation. Close to 0 returns the render almost unchanged, and 1 ignores it. I ran the terrace by hand with canny, strength 0.8 and seed 1, changing only this value, and chose 0.4 for the full run.</p>
+    <div id="series"></div>
+  </section>
+
+  <section class="wrap" aria-labelledby="numbers-title">
+    <h2 id="numbers-title">The numbers</h2>
+    <p>Six frames, two methods and three seeds make 36 images per run. Between the two runs only the starting point changed.</p>
+    <div id="summary"></div>
+    <ul>
+      <li>Colour shift fell below the barely visible level of about 2 in all 6 frames, with both methods.</li>
+      <li>Lines with no basis in the source fell in all 6 frames, with both methods.</li>
+      <li>Results became more stable. Between seeds, colour shift now differs by 0.33 on average, down from 5.4.</li>
+      <li>Not everything improved. True boundaries kept fell on the terrace with canny and on the facade with depth, and tree trunks on the terrace still have a colour difference of 10.6.</li>
+      <li>The choice between canny and depth stopped mattering much. Colour shift is equal, and depth keeps slightly more true boundaries.</li>
+    </ul>
+  </section>
+
+  <section class="wrap" aria-labelledby="limits-title">
+    <h2 id="limits-title">What this does not show</h2>
+    <ul>
+      <li><strong>These scores reward closeness to the source.</strong> At a denoise near 0 they would be almost perfect while nothing had improved. None of them says whether an image looks more like a photograph. So far that is only my judgement by eye.</li>
+      <li><strong>Mean colour does not see texture.</strong> On the facade the weathered stone floor became smoother, veined stone, although its mean colour moved by only 1.1.</li>
+      <li><strong>Starting from the render keeps its lighting too.</strong> The terrace stays as dark as the source, so this setting will not fix a dull render.</li>
+      <li><strong>The sample is small.</strong> I chose 0.4 on one frame and one seed, then tested it on six frames and three seeds.</li>
+      <li><strong>Two colours in my prompts were wrong in these runs.</strong> Correcting them later changed colour shift only slightly at denoise 0.4.</li>
+    </ul>
+  </section>
+
+  <section class="wrap" aria-labelledby="setup-title">
+    <h2 id="setup-title">Setup</h2>
+    <p>SDXL base 1.0 and ControlNet Union SDXL promax in ComfyUI, on a laptop with an RTX 3070 (8 GB of VRAM) and 14 GB of RAM. Peak VRAM was 7.1 GB. Under load the GPU throttled from 1697 MHz to about 950 MHz, and an image took about 47 seconds at denoise 0.4. On this laptop the same settings give the same image: five hand-run images match the scripted runs pixel for pixel.</p>
+    <p>I started this project on 2 November 2026. The full log, including what failed on the way, is in the <a href="https://github.com/SofiSokolova/archviz-controlnet-benchmark/blob/main/JOURNAL.md">experiment journal</a>.</p>
+    <h3>Scenes</h3>
+    <p>Classroom by Christophe Seux (CC0), Barcelona Pavillion by eMirage (CC-BY) and Italian Flat by Flavio Della Tommasa (CC-BY), all from the <a href="https://www.blender.org/download/demo-files/">Blender demo files</a>. I rendered new frames from these scenes, and the results shown here were generated from those frames with SDXL.</p>
+  </section>
+</main>
+
+<footer class="wrap page-footer">
+  <p>Sofiia Sokolova · <a href="https://github.com/SofiSokolova">GitHub</a></p>
+</footer>
+
+<script src="data.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

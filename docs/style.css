@@ -1,0 +1,296 @@
+:root {
+  color-scheme: light dark;
+  --bg: #f6f5f1;
+  --ink: #1c2326;
+  --muted: #55626a;
+  --rule: #d6d9d5;
+  --accent: #1f5a6b;
+  --on-accent: #ffffff;
+  --highlight: #e4eef0;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #15181a;
+    --ink: #e8eaea;
+    --muted: #9aa5ab;
+    --rule: #30363a;
+    --accent: #8cc7d8;
+    --on-accent: #10181b;
+    --highlight: #22303a;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 17px/1.55 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+a { color: var(--accent); text-underline-offset: 2px; }
+
+code { font: 0.92em ui-monospace, Consolas, Menlo, monospace; }
+
+p, ul { max-width: 70ch; }
+
+ul { padding-left: 20px; }
+
+li { margin-block: 8px; }
+
+.wrap {
+  max-width: 1040px;
+  margin-inline: auto;
+  padding-inline: 16px;
+}
+
+.page-header { padding-block: 48px 8px; }
+
+.eyebrow {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font: 0.86rem ui-monospace, Consolas, Menlo, monospace;
+}
+
+h1 {
+  max-width: 18ch;
+  margin: 0 0 20px;
+  font-size: clamp(2.1rem, 6vw, 3.4rem);
+  font-weight: 650;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  margin: 0 0 12px;
+  padding-top: 20px;
+  border-top: 1px solid var(--rule);
+  font-size: 1.55rem;
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+h3 { margin: 28px 0 6px; font-size: 1.05rem; }
+
+main > section { margin-top: 56px; }
+
+.lead { font-size: 1.14rem; line-height: 1.5; }
+
+.links { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-top: 20px; font-weight: 600; }
+
+.page-footer { margin-top: 56px; padding-block: 20px 40px; color: var(--muted); }
+
+.page-footer p { margin: 0; padding-top: 20px; border-top: 1px solid var(--rule); max-width: none; }
+
+/* Choices */
+
+fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+
+legend {
+  margin-bottom: 6px;
+  padding: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.choice input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.choice label { position: relative; display: block; cursor: pointer; }
+
+.choice input:focus-visible + .option { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.thumbs .options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.thumbs .option { display: block; font-size: 0.86rem; line-height: 1.3; }
+
+.thumbs img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-bottom: 5px;
+  border-radius: 3px;
+  outline: 3px solid transparent;
+  outline-offset: 1px;
+}
+
+.thumbs input:checked + .option { font-weight: 650; }
+
+.thumbs input:checked + .option img { outline-color: var(--accent); }
+
+.segments .options { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.segments .option {
+  display: block;
+  padding: 7px 14px;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  font-size: 0.94rem;
+  line-height: 1.25;
+}
+
+.segments input:checked + .option {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.controls { display: grid; gap: 16px; margin-block: 20px 16px; }
+
+.control-row { display: flex; flex-wrap: wrap; gap: 16px 32px; }
+
+/* Compare slider */
+
+.compare {
+  --position: 50%;
+  position: relative;
+  aspect-ratio: 1216 / 832;
+  overflow: hidden;
+  border-radius: 4px;
+  background: var(--rule);
+  cursor: ew-resize;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.compare:has(input:focus-visible) { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.compare img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.compare .after { clip-path: inset(0 0 0 var(--position)); }
+
+.compare input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--position);
+  width: 2px;
+  margin-left: -1px;
+  background: #ffffff;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.3);
+  pointer-events: none;
+}
+
+.divider::after {
+  content: "\2194";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin: -18px 0 0 -18px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.45);
+  color: #1c2326;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.compare-label {
+  position: absolute;
+  top: 8px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background: rgb(15 20 22 / 0.74);
+  color: #ffffff;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  pointer-events: none;
+}
+
+.compare-label.before { left: 8px; }
+
+.compare-label.after-label { right: 8px; }
+
+/* Tables */
+
+.table-scroll { margin-top: 16px; overflow-x: auto; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.94rem;
+  font-variant-numeric: tabular-nums;
+}
+
+caption {
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 0.86rem;
+  text-align: left;
+}
+
+th, td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--rule);
+  text-align: right;
+  vertical-align: top;
+}
+
+th { font-weight: 600; }
+
+thead th { color: var(--muted); font-size: 0.86rem; vertical-align: bottom; }
+
+th:first-child, .text { text-align: left; }
+
+tbody th { font-weight: 500; }
+
+.hint { display: block; color: var(--muted); font-size: 0.8rem; font-weight: 400; }
+
+.is-active { background: var(--highlight); font-weight: 650; }
+
+.series-table td.text { min-width: 18rem; font-weight: 400; }
+
+.summary-table { min-width: 620px; }
+
+/* Failures */
+
+.failures { display: grid; gap: 36px; margin-top: 24px; }
+
+.failure { display: grid; gap: 12px; margin: 0; }
+
+.failure figcaption h3 { margin: 0 0 4px; font-size: 1.1rem; }
+
+.failure figcaption p { margin: 0; }
+
+@media (min-width: 720px) {
+  .wrap { padding-inline: 32px; }
+
+  .thumbs .options { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+
+  .failure { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 24px; align-items: start; }
+}
