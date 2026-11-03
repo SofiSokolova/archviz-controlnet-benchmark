@@ -72,3 +72,35 @@ I wrote the prompts from low-resolution previews and got two colours wrong: "gre
 1. Write the metrics script: contour match, depth error against the true depth, colour shift per material mask.
 2. Run it on this baseline to replace the impressions above with numbers.
 3. Try one fix and measure it. The baseline never shows the model the source colours, so the first candidate is starting from the Blender render (img2img) instead of noise, with the prompts corrected.
+
+## 3 November 2026: trying it by hand in ComfyUI
+
+Until now the images came from a script. Today I opened the same chain in the ComfyUI interface and ran the Barcelona terrace frame by hand, changing one thing at a time. That gave 16 images.
+
+| Image | Strength | Seed | What changed |
+|---|---|---|---|
+| canny 1 | 0.8 | 1 | nothing, the starting point |
+| canny 2 | 0.3 | 1 | strength |
+| canny 3 | 1.0 | 1 | strength |
+| canny 4 | 1.0 | 1 | floor wording: `warm oak wooden floor` |
+| canny 5–11 | 1.0 | 1 | seven wordings for a matte stone floor |
+| canny 12 | 0.8 | 2 | seed, original wording |
+| canny 13 | 0.8 | 3 | seed, original wording |
+| depth 1 | 0.8 | 1 | depth instead of canny, original wording |
+| canny 14 | 0.8 | 3 | added `glossy, polished, reflective floor` to the negative prompt |
+| canny 15 | 0.8 | 1 | same negative prompt, seed back to 1 |
+
+### What I saw
+
+- **Starting point.** The lighting and the colour of the glass behind the chairs changed, but overall the frame feels improved.
+- **Strength 0.3.** The floor became glossy, the chairs look different, an extra chair appeared in the background, and there are extra windows.
+- **Strength 1.0.** The picture looks closer to the original, with fewer extra objects, but the floor suffers: it has extra lines and is glossier.
+- **Floor wording.** I could not fully fix the floor. The words I used: `on a matte gray flat stone tiles, same-sized, with matte dark concrete-like lines at the border of tiles`.
+- **Seed 2.** The colours became more saturated. The floor stands out most: it became lighter and even glossier.
+- **Seed 3.** An extra armchair appeared, but the colours are closer to the original and the floor is more matte.
+- **Depth, seed 1.** The glass wall became a kind of white curtain, and the floor became glossier.
+- **Negative prompt.** I first forgot to change seed 3 back, and a strange structure made of chairs appeared. With the seed changed, the normal floor came back. It seems less glossy, but it is still not really matte and far from ideal.
+
+### Repeatability check
+
+Four of these images used the same settings as the baseline run: canny with seeds 1, 2 and 3, and depth with seed 1. Each one matches its baseline image exactly, with 100% of pixels identical, although one was made through the interface and the other through the API. So on this laptop the same settings give the same image.
