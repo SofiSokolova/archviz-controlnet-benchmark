@@ -1,0 +1,13 @@
+# Source scenes are not redistributed: see README for links and licences
+scenes/
+
+# Generated locally
+frames/
+runs/
+__pycache__/
+
+# Personal and local files
+private/
+*_CV.*
+.claude/
+.edge-tmp/

@@ -1,0 +1,11 @@
+{
+  "negative": "cartoon, illustration, painting, 3d render, lowres, blurry, distorted, warped, deformed, extra objects, text, watermark",
+  "frames": {
+    "classroom_main": "interior photograph of an old school classroom, rows of wooden school desks with curved chrome legs, green chalkboard on a beige plaster wall, grey wood wainscoting, wooden floor, white pendant lamps, tall windows with venetian blinds and bright daylight, children's drawings pinned to the wall, photorealistic architectural photography, sharp focus, high detail",
+    "classroom_left": "interior photograph of an old school classroom, wooden school desks with curved chrome legs in the foreground, cork notice board and green chalkboard on a beige plaster wall, grey wood wainscoting, wooden floor, white pendant lamps, warm daylight, photorealistic architectural photography, sharp focus, high detail",
+    "barcelona_terrace": "photograph of a modernist pavilion terrace, two white leather Barcelona chairs with chrome frames on a grey weathered stone floor, floor-to-ceiling glass wall with thin chrome frames, flat white ceiling, green trees behind, concrete column, midday daylight, photorealistic architectural photography, sharp focus, high detail",
+    "barcelona_facade": "photograph of a modernist pavilion exterior, long glass facade with chrome frames reflecting the sky, red-brown polished marble wall behind the glass, pale weathered stone floor slabs, flat white roof overhang, blue sky with clouds, green and orange trees in the distance, midday daylight, photorealistic architectural photography, sharp focus, high detail",
+    "flat_living": "interior photograph of a modern apartment living room in the evening, grey fabric sofa, dark blue armchair, round floor cushions, tall black metal shelf full of books, ribbed glass sliding doors open to a dining area, floor lamp with warm light, dark floor, grey carpet, photorealistic architectural photography, sharp focus, high detail",
+    "flat_kitchen": "interior photograph of a modern apartment kitchen, white dining table with six black upholstered chairs on thin black metal legs, white and pale concrete kitchen units, dark grey worktop, black open shelves with jars, large window with soft bright daylight, smooth dark grey floor, photorealistic architectural photography, sharp focus, high detail"
+  }
+}

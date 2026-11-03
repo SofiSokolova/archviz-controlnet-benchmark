@@ -1,0 +1,14 @@
+{
+  "classroom": [
+    {"id": "classroom_main", "camera": "renderCam"},
+    {"id": "classroom_left", "camera": "renderCam", "yaw": 28}
+  ],
+  "barcelona": [
+    {"id": "barcelona_terrace", "camera": "Camera.004"},
+    {"id": "barcelona_facade", "camera": "Camera.006"}
+  ],
+  "flat": [
+    {"id": "flat_living", "camera": "Cam Living"},
+    {"id": "flat_kitchen", "camera": "Cam Kitchen Table"}
+  ]
+}
