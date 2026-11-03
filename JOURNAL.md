@@ -174,3 +174,87 @@ What the numbers say about what I saw:
 ### Next
 
 Try the first real fix and measure it with this script: start from the Blender render (img2img) instead of noise, with the prompts corrected.
+
+## 3 November 2026: starting from the render
+
+The baseline never shows the model the source colours. So I changed one thing: generation now starts from the Blender render with noise added, instead of from pure noise. The `denoise` setting decides how much noise: close to 0 returns the render almost unchanged, and 1 is the baseline.
+
+I also added a score, `pixel_change`: the mean colour difference per pixel from the source. It shows how much the model changed at all, and it reacts to new texture, which the mean colour per material does not.
+
+### Choosing the value by hand
+
+I ran the terrace frame in ComfyUI with canny, strength 0.8 and seed 1, changing only `denoise`.
+
+| `denoise` | `edge_extra` | `depth_error` | `color_shift` | Floor ΔE | Floor lightness spread | `pixel_change` |
+|---|---|---|---|---|---|---|
+| 1.0, from noise | 0.406 | 0.046 | 26.4 | 26.5 | 56.2 | 31.3 |
+| 0.8 | 0.349 | 0.048 | 14.7 | 15.2 | 49.0 | 16.7 |
+| 0.6 | 0.266 | 0.039 | 3.4 | 2.8 | 31.5 | 7.3 |
+| 0.5 | 0.126 | 0.034 | 1.9 | 1.4 | 28.7 | 5.6 |
+| 0.4 | 0.090 | 0.031 | 1.1 | 0.6 | 28.3 | 4.8 |
+| source | 0 | 0.029 | 0 | 0 | 28.9 | 0 |
+
+What I saw:
+
+- **0.8.** Worse than 0.6. The column is round, there are no hatches, but the windows look strange and the floor is glossier.
+- **0.6.** The column on the left became round and extra hatches appeared on the ceiling. The windows and chairs look decent. The floor is less glossy, but it has random lines.
+- **0.5.** I think it looks more like a photo than a 3D render, but 0.4 looked even more like one. Depth feels stronger at 0.5. The floor is acceptable and the column, chairs and glass look good, but to me the colour is a bit dark.
+- **0.4.** Closer to the original. The column is no longer round, the hatches are gone, and the floor is practically identical.
+
+I chose 0.4. The numbers agree with most of this. One difference: I found 0.5 a bit dark, but its lightness is as close to the source as that of 0.4 (+0.4 and +0.2). The darkness comes from the source render, which the model no longer brightens.
+
+The first image from the script at 0.4 matched my hand-run image exactly, with 100% of pixels identical.
+
+### All frames at 0.4: 36 images
+
+Same frames, seeds, prompts and strength as the baseline. Only the starting point changed.
+
+| Score | Source render | Canny, from noise | Canny, 0.4 | Depth, from noise | Depth, 0.4 |
+|---|---|---|---|---|---|
+| `edge_recall` | 0.876 | 0.838 | 0.849 | 0.811 | 0.863 |
+| `edge_extra` | 0 | 0.311 | 0.071 | 0.373 | 0.076 |
+| `depth_error` | 0.062 | 0.088 | 0.073 | 0.086 | 0.073 |
+| `color_shift` | 0 | 17.2 | 1.2 | 20.3 | 1.2 |
+| `chroma_shift` | 0 | 6.2 | 1.0 | 6.6 | 1.0 |
+| `pixel_change` | 0 | 24.1 | 4.6 | 28.5 | 4.8 |
+
+What got better:
+
+- **Materials.** `color_shift` fell below the level of about 2 that is barely visible, in all 6 frames with both methods. The red marble no longer spreads over the facade floor: its chroma shift there fell from 11.9 to 1.1. The cork board in `classroom_left` stays cork: its ΔE fell from 25.8 to 1.3.
+- **Invented lines.** `edge_extra` fell in all 6 frames with both methods.
+- **Stability.** The difference between seeds fell from 5.4 to 0.33 on `color_shift` and from 0.044 to 0.017 on `edge_recall`.
+
+What did not get better:
+
+- `edge_recall` fell on the terrace with canny (0.866 to 0.848) and on the facade with depth (0.851 to 0.832).
+- `depth_error` rose on `classroom_left` with both methods and on `classroom_main` with depth. The estimator's own error on those source renders is 0.17 and 0.11, so I would not read much into this.
+- Colour is not equally good everywhere. 17 materials are still above 2: tree trunks on the terrace are the worst at 10.6, and the others are at most 5.
+
+**Canny against depth.** The gap from the baseline mostly closes. Colour is equal, and `edge_extra` is 0.071 against 0.076. `edge_recall` now goes the other way: depth is better in all 6 frames, 0.863 against 0.849. At this setting the choice between them matters little.
+
+### Corrected prompts: 18 images
+
+After the main run I corrected the two wrong colours and re-ran only the three frames they affect. The baseline and the main run at 0.4 used the prompts as of commit 6597b2e.
+
+| Frame | `color_shift`, wrong prompt | `color_shift`, corrected |
+|---|---|---|
+| `classroom_main` | 1.59 | 1.43 |
+| `classroom_left` | 1.27 | 1.12 |
+| `flat_living` | 0.88 | 0.86 |
+
+The chalkboard in `classroom_left` improved most, from a ΔE of 1.88 to 0.94. Geometry scores barely moved. Starting from the render, a wrong colour in the prompt does little harm.
+
+### The slowdown was thermal
+
+This answers the open question from the first run. The new log shows the GPU clock falling from 1697 MHz at the start to about 950 MHz, with the thermal slowdown flag on in nearly every sample while the GPU was busy, at up to 89 °C. Each image took 36 s at the start and about 47 s later on, and the 36 images took 28 minutes. Peak VRAM was 7.1 GB of 8 GB. It costs time only: the script's image, made on a hot GPU, still matched the hand-run image exactly.
+
+### Limits of this result
+
+- **The scores reward closeness to the source.** At `denoise` near 0 they would be almost perfect while nothing had improved. `pixel_change` fell from about 26 to 4.7, so a large part of the gain is simply that the model changes much less. None of the scores says whether an image looks more like a photograph. So far that is only my judgement by eye.
+- **Mean colour does not see texture.** On the facade the weathered stone floor with dark specks became smoother, veined stone, although its mean colour moved by only 1.1. Its `pixel_change` of 5.2 is higher than the 2.3 on the white ceiling, but this score alone does not separate texture from other change.
+- **One value for everything.** I chose 0.4 on one frame and one seed.
+- **The terrace stays as dark as the source.** Starting from the render keeps its lighting too, so this setting will not fix a dull render.
+
+### Next
+
+Show it: a README and a before and after page with the results and the failures.

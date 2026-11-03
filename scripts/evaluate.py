@@ -7,6 +7,11 @@ For every image in runs/<run>/<frame>/*.png, compared with frames/<frame>/:
     color_shift      colour difference per material from the source (CIE76 Delta E), weighted by area
     chroma_shift     the same with lightness left out, so only hue and saturation count
     lightness_shift  signed change in lightness per material, weighted by area
+    pixel_change     mean colour difference per pixel from the source: how much changed at all
+
+Every score here rewards closeness to the source, so none of them can say whether an image looks
+more like a photograph. An image that changed nothing would score almost perfectly. pixel_change
+shows how much was changed, and unlike the mean colours per material it also reacts to new texture.
 
 The source render is measured too, as method "source", as a reference point: its geometry is correct
 by definition, so its depth_error shows the error of the depth estimator itself.
@@ -45,11 +50,11 @@ DENSE_WINDOW_PX = 31
 DENSE_SHARE = 0.2  # boundaries this dense are foliage or stochastic noise, not structure
 MIN_MATERIAL_SHARE = 0.01
 
-SCORES = ["edge_recall", "edge_extra", "depth_error", "color_shift", "chroma_shift", "lightness_shift"]
-METRIC_FIELDS = ["frame", "image", "method", "seed", "strength"] + SCORES
+SCORES = ["edge_recall", "edge_extra", "depth_error", "color_shift", "chroma_shift", "lightness_shift", "pixel_change"]
+METRIC_FIELDS = ["frame", "image", "method", "seed", "strength", "denoise"] + SCORES
 MATERIAL_FIELDS = [
-    "frame", "image", "method", "seed", "strength", "material", "share", "counted",
-    "delta_e", "chroma_shift", "lightness_shift", "lightness_spread", "source_lightness_spread",
+    "frame", "image", "method", "seed", "strength", "denoise", "material", "share", "counted",
+    "delta_e", "chroma_shift", "lightness_shift", "pixel_delta_e", "lightness_spread", "source_lightness_spread",
 ]
 
 
@@ -175,6 +180,7 @@ def material_scores(lab, frame):
             "delta_e": round(float(np.linalg.norm(difference)), 2),
             "chroma_shift": round(float(np.linalg.norm(difference[1:])), 2),
             "lightness_shift": round(float(difference[0]), 2),
+            "pixel_delta_e": round(float(np.linalg.norm(pixels - source_pixels, axis=1).mean()), 2),
             "lightness_spread": round(float(np.ptp(np.percentile(pixels[:, 0], [5, 95]))), 2),
             "source_lightness_spread": round(float(np.ptp(np.percentile(source_pixels[:, 0], [5, 95]))), 2),
         })
@@ -188,7 +194,7 @@ def weighted_mean(rows, field):
 
 
 def image_settings(path):
-    settings = {"method": "", "seed": "", "strength": ""}
+    settings = {"method": "", "seed": "", "strength": "", "denoise": ""}
     workflow = json.loads(Image.open(path).info.get("prompt", "{}"))
     for node in workflow.values():
         kind, inputs = node.get("class_type"), node.get("inputs", {})
@@ -196,6 +202,7 @@ def image_settings(path):
             settings["method"] = "depth" if inputs["type"] == "depth" else "canny"
         elif kind == "KSampler":
             settings["seed"] = inputs["seed"]
+            settings["denoise"] = inputs["denoise"]
         elif kind == "ControlNetApplyAdvanced":
             settings["strength"] = inputs["strength"]
     return settings
@@ -213,7 +220,8 @@ def save_overlay(path, rgb, frame, kept, extra):
 
 def evaluate_image(rgb, settings, name, frame, processor, model, device):
     recall, share_extra, kept, extra = edge_scores(image_edges(rgb, device), frame)
-    materials = material_scores(to_lab(rgb, device), frame)
+    lab = to_lab(rgb, device)
+    materials = material_scores(lab, frame)
     row = {
         "frame": frame["id"],
         "image": name,
@@ -224,6 +232,7 @@ def evaluate_image(rgb, settings, name, frame, processor, model, device):
         "color_shift": round(weighted_mean(materials, "delta_e"), 2),
         "chroma_shift": round(weighted_mean(materials, "chroma_shift"), 2),
         "lightness_shift": round(weighted_mean(materials, "lightness_shift"), 2),
+        "pixel_change": round(float(np.linalg.norm(lab - frame["lab"], axis=2).mean()), 2),
     }
     identity = {"frame": frame["id"], "image": name, **settings}
     return row, [{**identity, **material} for material in materials], kept, extra
@@ -253,7 +262,7 @@ def main():
         if args.only and image_dir.name not in args.only:
             continue
         frame = load_frame(Path(args.frames) / image_dir.name, device)
-        source_settings = {"method": "source", "seed": "", "strength": ""}
+        source_settings = {"method": "source", "seed": "", "strength": "", "denoise": ""}
         jobs = [("source", frame["rgb"], source_settings)]
         for path in sorted(image_dir.glob("*.png")):
             if path.name != "edges.png":

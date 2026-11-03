@@ -20,7 +20,15 @@ import requests
 CHECKPOINT = "sd_xl_base_1.0_0.9vae.safetensors"
 CONTROLNET = "controlnet-union-sdxl-1.0-promax.safetensors"
 UNION_TYPES = {"depth": "depth", "canny": "canny/lineart/anime_lineart/mlsd"}
-CSV_FIELDS = ["frame", "method", "seed", "seconds", "peak_vram_mb", "peak_temp_c", "min_free_ram_gb", "file"]
+CSV_FIELDS = [
+    "frame", "method", "seed", "seconds", "peak_vram_mb", "peak_temp_c", "min_free_ram_gb",
+    "busy_clock_mhz", "thermal_slowdown_share", "file",
+]
+GPU_QUERY = (
+    "memory.used,temperature.gpu,utilization.gpu,clocks.current.graphics,"
+    "clocks_event_reasons.sw_thermal_slowdown,clocks_event_reasons.hw_thermal_slowdown"
+)
+BUSY_GPU_PERCENT = 80
 
 
 def parse_args():
@@ -36,6 +44,7 @@ def parse_args():
     parser.add_argument("--sampler", default="dpmpp_2m")
     parser.add_argument("--scheduler", default="karras")
     parser.add_argument("--strength", type=float, default=0.8, help="ControlNet strength")
+    parser.add_argument("--denoise", type=float, default=1.0, help="below 1, start from the render instead of noise")
     parser.add_argument("--canny-low", type=float, default=0.2)
     parser.add_argument("--canny-high", type=float, default=0.5)
     parser.add_argument("--url", default="http://127.0.0.1:8188")
@@ -43,7 +52,7 @@ def parse_args():
 
 
 class HardwareMonitor:
-    """Samples GPU memory, GPU temperature and free RAM once a second."""
+    """Samples GPU memory, temperature, clock and free RAM once a second."""
 
     def __init__(self):
         self.reset()
@@ -54,17 +63,30 @@ class HardwareMonitor:
         self.peak_vram_mb = 0
         self.peak_temp_c = 0
         self.min_free_ram_gb = float("inf")
+        self._busy_clocks = []
+        self._busy_slowdowns = 0
 
     def _sample(self):
         output = subprocess.run(
-            ["nvidia-smi", "--query-gpu=memory.used,temperature.gpu", "--format=csv,noheader,nounits"],
+            ["nvidia-smi", f"--query-gpu={GPU_QUERY}", "--format=csv,noheader,nounits"],
             capture_output=True,
             text=True,
         ).stdout
-        vram, temp = (int(value) for value in output.strip().split(","))
+        values = [value.strip() for value in output.strip().split(",")]
+        vram, temp, load, clock = (int(value) for value in values[:4])
         self.peak_vram_mb = max(self.peak_vram_mb, vram)
         self.peak_temp_c = max(self.peak_temp_c, temp)
         self.min_free_ram_gb = min(self.min_free_ram_gb, psutil.virtual_memory().available / 1024**3)
+        # Between renders the clock drops on its own, so only busy moments say anything about throttling.
+        if load >= BUSY_GPU_PERCENT:
+            self._busy_clocks.append(clock)
+            self._busy_slowdowns += "Active" in values[4:]
+
+    def busy_clock_mhz(self):
+        return round(sum(self._busy_clocks) / len(self._busy_clocks)) if self._busy_clocks else 0
+
+    def thermal_slowdown_share(self):
+        return round(self._busy_slowdowns / len(self._busy_clocks), 3) if self._busy_clocks else 0
 
     def _loop(self):
         while not self._stop.wait(1.0):
@@ -91,8 +113,10 @@ def upload_image(url, path, name):
     return f"benchmark/{name}"
 
 
-def build_workflow(args, method, control_image, positive, negative, seed, size, prefix, save_edges_as):
-    """Text prompt plus one ControlNet: the model invents everything the control image leaves open."""
+def build_workflow(args, method, control_image, start_image, positive, negative, seed, size, prefix, save_edges_as):
+    """Text prompt plus one ControlNet. Starting from noise, the model invents everything the control
+    image leaves open. With denoise below 1 it starts from the render, so it also sees the source colours.
+    """
     workflow = {
         "checkpoint": {"class_type": "CheckpointLoaderSimple", "inputs": {"ckpt_name": CHECKPOINT}},
         "positive": {"class_type": "CLIPTextEncode", "inputs": {"text": positive, "clip": ["checkpoint", 1]}},
@@ -132,12 +156,18 @@ def build_workflow(args, method, control_image, positive, negative, seed, size, 
                 "cfg": args.cfg,
                 "sampler_name": args.sampler,
                 "scheduler": args.scheduler,
-                "denoise": 1.0,
+                "denoise": args.denoise,
             },
         },
         "decode": {"class_type": "VAEDecode", "inputs": {"samples": ["sampler", 0], "vae": ["checkpoint", 2]}},
         "save": {"class_type": "SaveImage", "inputs": {"images": ["decode", 0], "filename_prefix": prefix}},
     }
+    if args.denoise < 1:
+        workflow["start_image"] = {"class_type": "LoadImage", "inputs": {"image": start_image}}
+        workflow["latent"] = {
+            "class_type": "VAEEncode",
+            "inputs": {"pixels": ["start_image", 0], "vae": ["checkpoint", 2]},
+        }
     if method == "canny":
         workflow["edges"] = {
             "class_type": "Canny",
@@ -246,7 +276,7 @@ def main():
                     prefix = f"benchmark/{run_dir.name}/{frame_id}_{method}_s{seed}"
                     save_edges = f"{prefix}_edges" if method == "canny" and not edges_path.exists() else None
                     workflow = build_workflow(
-                        args, method, sources[method], prompts["frames"][frame_id], prompts["negative"],
+                        args, method, sources[method], sources["canny"], prompts["frames"][frame_id], prompts["negative"],
                         seed, meta["resolution"], prefix, save_edges,
                     )
 
@@ -267,13 +297,15 @@ def main():
                         "peak_vram_mb": monitor.peak_vram_mb,
                         "peak_temp_c": monitor.peak_temp_c,
                         "min_free_ram_gb": round(monitor.min_free_ram_gb, 2),
+                        "busy_clock_mhz": monitor.busy_clock_mhz(),
+                        "thermal_slowdown_share": monitor.thermal_slowdown_share(),
                         "file": out_path.relative_to(run_dir).as_posix(),
                     })
                     results_file.flush()
                     print(
                         f"[{done}/{total}] {frame_id} {method} seed {seed}: {seconds:.1f} s, "
                         f"VRAM {monitor.peak_vram_mb} MB, {monitor.peak_temp_c} C, "
-                        f"free RAM {monitor.min_free_ram_gb:.1f} GB",
+                        f"clock {monitor.busy_clock_mhz()} MHz, free RAM {monitor.min_free_ram_gb:.1f} GB",
                         flush=True,
                     )
 
