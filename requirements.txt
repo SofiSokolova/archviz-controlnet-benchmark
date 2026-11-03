@@ -1,0 +1,11 @@
+# Install PyTorch for your CUDA version first: https://pytorch.org/get-started/locally/
+# The runs used torch 2.14.1 with CUDA 12.6 on Python 3.13.
+# The Blender scripts use Blender's own Python, so they need nothing from this file.
+torch==2.14.1
+kornia==0.9.0
+numpy==2.5.4
+pillow==13.0.0
+psutil==7.2.2
+requests==2.34.2
+scipy==1.18.1
+transformers==5.22.1

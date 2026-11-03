@@ -1,0 +1,700 @@
+{
+ "last_node_id": 13,
+ "last_link_id": 17,
+ "nodes": [
+  {
+   "id": 1,
+   "type": "CheckpointLoaderSimple",
+   "pos": [
+    40,
+    40
+   ],
+   "size": [
+    340,
+    110
+   ],
+   "flags": {},
+   "order": 0,
+   "mode": 0,
+   "inputs": [],
+   "outputs": [
+    {
+     "name": "MODEL",
+     "type": "MODEL",
+     "links": [
+      8
+     ],
+     "slot_index": 0
+    },
+    {
+     "name": "CLIP",
+     "type": "CLIP",
+     "links": [
+      1,
+      2
+     ],
+     "slot_index": 1
+    },
+    {
+     "name": "VAE",
+     "type": "VAE",
+     "links": [
+      7,
+      13
+     ],
+     "slot_index": 2
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "CheckpointLoaderSimple"
+   },
+   "widgets_values": [
+    "sd_xl_base_1.0_0.9vae.safetensors"
+   ],
+   "title": "SDXL model"
+  },
+  {
+   "id": 2,
+   "type": "LoadImage",
+   "pos": [
+    40,
+    200
+   ],
+   "size": [
+    340,
+    380
+   ],
+   "flags": {},
+   "order": 1,
+   "mode": 0,
+   "inputs": [],
+   "outputs": [
+    {
+     "name": "IMAGE",
+     "type": "IMAGE",
+     "links": [
+      15
+     ],
+     "slot_index": 0
+    },
+    {
+     "name": "MASK",
+     "type": "MASK",
+     "links": [],
+     "slot_index": 1
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "LoadImage"
+   },
+   "widgets_values": [
+    "barcelona_terrace_beauty.png",
+    "image"
+   ],
+   "title": "Source frame from Blender"
+  },
+  {
+   "id": 3,
+   "type": "CLIPTextEncode",
+   "pos": [
+    420,
+    40
+   ],
+   "size": [
+    460,
+    230
+   ],
+   "flags": {},
+   "order": 2,
+   "mode": 0,
+   "inputs": [
+    {
+     "name": "clip",
+     "type": "CLIP",
+     "link": 1
+    }
+   ],
+   "outputs": [
+    {
+     "name": "CONDITIONING",
+     "type": "CONDITIONING",
+     "links": [
+      4
+     ],
+     "slot_index": 0
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "CLIPTextEncode"
+   },
+   "widgets_values": [
+    "photograph of a modernist pavilion terrace, two white leather Barcelona chairs with chrome frames on a grey weathered stone floor, floor-to-ceiling glass wall with thin chrome frames, flat white ceiling, green trees behind, concrete column, midday daylight, photorealistic architectural photography, sharp focus, high detail"
+   ],
+   "title": "Prompt",
+   "color": "#2a4d2a",
+   "bgcolor": "#3a663a"
+  },
+  {
+   "id": 4,
+   "type": "CLIPTextEncode",
+   "pos": [
+    420,
+    310
+   ],
+   "size": [
+    460,
+    130
+   ],
+   "flags": {},
+   "order": 3,
+   "mode": 0,
+   "inputs": [
+    {
+     "name": "clip",
+     "type": "CLIP",
+     "link": 2
+    }
+   ],
+   "outputs": [
+    {
+     "name": "CONDITIONING",
+     "type": "CONDITIONING",
+     "links": [
+      5
+     ],
+     "slot_index": 0
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "CLIPTextEncode"
+   },
+   "widgets_values": [
+    "cartoon, illustration, painting, 3d render, lowres, blurry, distorted, warped, deformed, extra objects, text, watermark"
+   ],
+   "title": "Negative prompt"
+  },
+  {
+   "id": 5,
+   "type": "EmptyLatentImage",
+   "pos": [
+    420,
+    480
+   ],
+   "size": [
+    340,
+    110
+   ],
+   "flags": {},
+   "order": 4,
+   "mode": 0,
+   "inputs": [],
+   "outputs": [
+    {
+     "name": "LATENT",
+     "type": "LATENT",
+     "links": [
+      11
+     ],
+     "slot_index": 0
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "EmptyLatentImage"
+   },
+   "widgets_values": [
+    1216,
+    832,
+    1
+   ],
+   "title": "Image size, start from noise"
+  },
+  {
+   "id": 6,
+   "type": "ControlNetLoader",
+   "pos": [
+    920,
+    40
+   ],
+   "size": [
+    360,
+    60
+   ],
+   "flags": {},
+   "order": 5,
+   "mode": 0,
+   "inputs": [],
+   "outputs": [
+    {
+     "name": "CONTROL_NET",
+     "type": "CONTROL_NET",
+     "links": [
+      3
+     ],
+     "slot_index": 0
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "ControlNetLoader"
+   },
+   "widgets_values": [
+    "controlnet-union-sdxl-1.0-promax.safetensors"
+   ],
+   "title": "ControlNet model"
+  },
+  {
+   "id": 7,
+   "type": "SetUnionControlNetType",
+   "pos": [
+    920,
+    140
+   ],
+   "size": [
+    360,
+    60
+   ],
+   "flags": {},
+   "order": 6,
+   "mode": 0,
+   "inputs": [
+    {
+     "name": "control_net",
+     "type": "CONTROL_NET",
+     "link": 3
+    }
+   ],
+   "outputs": [
+    {
+     "name": "CONTROL_NET",
+     "type": "CONTROL_NET",
+     "links": [
+      6
+     ],
+     "slot_index": 0
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "SetUnionControlNetType"
+   },
+   "widgets_values": [
+    "canny/lineart/anime_lineart/mlsd"
+   ],
+   "title": "ControlNet type"
+  },
+  {
+   "id": 8,
+   "type": "ControlNetApplyAdvanced",
+   "pos": [
+    920,
+    240
+   ],
+   "size": [
+    360,
+    190
+   ],
+   "flags": {},
+   "order": 7,
+   "mode": 0,
+   "inputs": [
+    {
+     "name": "positive",
+     "type": "CONDITIONING",
+     "link": 4
+    },
+    {
+     "name": "negative",
+     "type": "CONDITIONING",
+     "link": 5
+    },
+    {
+     "name": "control_net",
+     "type": "CONTROL_NET",
+     "link": 6
+    },
+    {
+     "name": "image",
+     "type": "IMAGE",
+     "link": 16
+    },
+    {
+     "name": "vae",
+     "type": "VAE",
+     "link": 7
+    }
+   ],
+   "outputs": [
+    {
+     "name": "positive",
+     "type": "CONDITIONING",
+     "links": [
+      9
+     ],
+     "slot_index": 0
+    },
+    {
+     "name": "negative",
+     "type": "CONDITIONING",
+     "links": [
+      10
+     ],
+     "slot_index": 1
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "ControlNetApplyAdvanced"
+   },
+   "widgets_values": [
+    0.8,
+    0.0,
+    1.0
+   ],
+   "title": "ControlNet strength",
+   "color": "#2a4d2a",
+   "bgcolor": "#3a663a"
+  },
+  {
+   "id": 9,
+   "type": "KSampler",
+   "pos": [
+    1320,
+    40
+   ],
+   "size": [
+    320,
+    480
+   ],
+   "flags": {},
+   "order": 8,
+   "mode": 0,
+   "inputs": [
+    {
+     "name": "model",
+     "type": "MODEL",
+     "link": 8
+    },
+    {
+     "name": "positive",
+     "type": "CONDITIONING",
+     "link": 9
+    },
+    {
+     "name": "negative",
+     "type": "CONDITIONING",
+     "link": 10
+    },
+    {
+     "name": "latent_image",
+     "type": "LATENT",
+     "link": 11
+    }
+   ],
+   "outputs": [
+    {
+     "name": "LATENT",
+     "type": "LATENT",
+     "links": [
+      12
+     ],
+     "slot_index": 0
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "KSampler"
+   },
+   "widgets_values": [
+    1,
+    "fixed",
+    25,
+    6.5,
+    "dpmpp_2m",
+    "karras",
+    1.0
+   ],
+   "title": "Sampler: seed picks the variant, denoise sets the freedom",
+   "color": "#2a4d2a",
+   "bgcolor": "#3a663a"
+  },
+  {
+   "id": 10,
+   "type": "VAEDecode",
+   "pos": [
+    1320,
+    570
+   ],
+   "size": [
+    320,
+    60
+   ],
+   "flags": {},
+   "order": 9,
+   "mode": 0,
+   "inputs": [
+    {
+     "name": "samples",
+     "type": "LATENT",
+     "link": 12
+    },
+    {
+     "name": "vae",
+     "type": "VAE",
+     "link": 13
+    }
+   ],
+   "outputs": [
+    {
+     "name": "IMAGE",
+     "type": "IMAGE",
+     "links": [
+      14
+     ],
+     "slot_index": 0
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "VAEDecode"
+   },
+   "widgets_values": [],
+   "title": "Decode"
+  },
+  {
+   "id": 11,
+   "type": "SaveImage",
+   "pos": [
+    1680,
+    40
+   ],
+   "size": [
+    620,
+    500
+   ],
+   "flags": {},
+   "order": 10,
+   "mode": 0,
+   "inputs": [
+    {
+     "name": "images",
+     "type": "IMAGE",
+     "link": 14
+    }
+   ],
+   "outputs": [],
+   "properties": {
+    "Node name for S&R": "SaveImage"
+   },
+   "widgets_values": [
+    "archviz/terrace_canny"
+   ],
+   "title": "Result"
+  },
+  {
+   "id": 12,
+   "type": "Canny",
+   "pos": [
+    920,
+    480
+   ],
+   "size": [
+    360,
+    110
+   ],
+   "flags": {},
+   "order": 11,
+   "mode": 0,
+   "inputs": [
+    {
+     "name": "image",
+     "type": "IMAGE",
+     "link": 15
+    }
+   ],
+   "outputs": [
+    {
+     "name": "IMAGE",
+     "type": "IMAGE",
+     "links": [
+      16,
+      17
+     ],
+     "slot_index": 0
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "Canny"
+   },
+   "widgets_values": [
+    0.2,
+    0.5
+   ],
+   "title": "Edges from the frame"
+  },
+  {
+   "id": 13,
+   "type": "PreviewImage",
+   "pos": [
+    1680,
+    590
+   ],
+   "size": [
+    620,
+    460
+   ],
+   "flags": {},
+   "order": 12,
+   "mode": 0,
+   "inputs": [
+    {
+     "name": "images",
+     "type": "IMAGE",
+     "link": 17
+    }
+   ],
+   "outputs": [],
+   "properties": {
+    "Node name for S&R": "PreviewImage"
+   },
+   "widgets_values": [],
+   "title": "Edges used"
+  }
+ ],
+ "links": [
+  [
+   1,
+   1,
+   1,
+   3,
+   0,
+   "CLIP"
+  ],
+  [
+   2,
+   1,
+   1,
+   4,
+   0,
+   "CLIP"
+  ],
+  [
+   3,
+   6,
+   0,
+   7,
+   0,
+   "CONTROL_NET"
+  ],
+  [
+   4,
+   3,
+   0,
+   8,
+   0,
+   "CONDITIONING"
+  ],
+  [
+   5,
+   4,
+   0,
+   8,
+   1,
+   "CONDITIONING"
+  ],
+  [
+   6,
+   7,
+   0,
+   8,
+   2,
+   "CONTROL_NET"
+  ],
+  [
+   7,
+   1,
+   2,
+   8,
+   4,
+   "VAE"
+  ],
+  [
+   8,
+   1,
+   0,
+   9,
+   0,
+   "MODEL"
+  ],
+  [
+   9,
+   8,
+   0,
+   9,
+   1,
+   "CONDITIONING"
+  ],
+  [
+   10,
+   8,
+   1,
+   9,
+   2,
+   "CONDITIONING"
+  ],
+  [
+   11,
+   5,
+   0,
+   9,
+   3,
+   "LATENT"
+  ],
+  [
+   12,
+   9,
+   0,
+   10,
+   0,
+   "LATENT"
+  ],
+  [
+   13,
+   1,
+   2,
+   10,
+   1,
+   "VAE"
+  ],
+  [
+   14,
+   10,
+   0,
+   11,
+   0,
+   "IMAGE"
+  ],
+  [
+   15,
+   2,
+   0,
+   12,
+   0,
+   "IMAGE"
+  ],
+  [
+   16,
+   12,
+   0,
+   8,
+   3,
+   "IMAGE"
+  ],
+  [
+   17,
+   12,
+   0,
+   13,
+   0,
+   "IMAGE"
+  ]
+ ],
+ "groups": [],
+ "config": {},
+ "extra": {},
+ "version": 0.4
+}
