@@ -5,9 +5,3 @@ scenes/
 frames/
 runs/
 __pycache__/
-
-# Personal and local files
-private/
-*_CV.*
-.claude/
-.edge-tmp/
